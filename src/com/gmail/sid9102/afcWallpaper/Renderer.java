@@ -1,12 +1,17 @@
 package com.gmail.sid9102.afcWallpaper;
 
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.StreamCorruptedException;
+
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
 
-import com.gmail.sid9102.afcWallpaper.R;
+import co.sidhant.arsenalwallpaper.R;
 
 
 import rajawali.BaseObject3D;
+import rajawali.SerializedObject3D;
 import rajawali.animation.Animation3D;
 import rajawali.animation.RotateAnimation3D;
 import rajawali.lights.ALight;
@@ -23,6 +28,7 @@ import rajawali.primitives.Cube;
 import rajawali.primitives.Plane;
 import rajawali.renderer.RajawaliRenderer;
 import android.content.Context;
+import android.content.res.Resources.NotFoundException;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.util.Log;
@@ -65,23 +71,31 @@ public class Renderer extends RajawaliRenderer {
 		bg.addLight(light);
 		addChild(bg);
 
-		ObjParser afcParser = new ObjParser(mContext.getResources(), mTextureManager, R.raw.afc_obj);
+		ObjectInputStream ois;
+		SerializedObject3D afcSer = null;
 		try {
-			afcParser.parse();
-			afc = afcParser.getParsedObject();
-			GouraudMaterial afcMat = new GouraudMaterial();
-			afcMat.setSpecularIntensity(0.2f, 0.2f, 0.2f, 0.2f);
-			afc.setMaterial(afcMat);
-			Bitmap afcTex = BitmapFactory.decodeResource(mContext.getResources(), R.drawable.afc_texture);
-			afc.addTexture(mTextureManager.addTexture(afcTex));
-			afc.addLight(light);
-			addChild(afc);
-		} catch (ParsingException e) {
+			ois = new ObjectInputStream(mContext.getResources().openRawResource(R.raw.afc_obj));
+			afcSer = (SerializedObject3D)ois.readObject();
+		} catch (StreamCorruptedException e1) {
+			e1.printStackTrace();
+		} catch (NotFoundException e1) {
+			e1.printStackTrace();
+		} catch (IOException e1) {
+			e1.printStackTrace();
+		} catch (ClassNotFoundException e) {
 			e.printStackTrace();
 		}
+		
+		afc = new BaseObject3D(afcSer);
+		GouraudMaterial afcMat = new GouraudMaterial();
+		afcMat.setSpecularIntensity(0.4f, 0.4f, 0.4f, 0.4f);
+		afc.setMaterial(afcMat);
+		Bitmap afcTex = BitmapFactory.decodeResource(mContext.getResources(), R.drawable.afc_texture);
+		afc.addTexture(mTextureManager.addTexture(afcTex));
+		afc.addLight(light);
+		addChild(afc);
 
 		afc.setPosition(0, -0.7f, 4);
-
 	}
 
 	public void onSurfaceCreated(GL10 gl, EGLConfig config) {
@@ -130,9 +144,15 @@ public class Renderer extends RajawaliRenderer {
 	public void onDrawFrame(GL10 glUnused) {
 		super.onDrawFrame(glUnused);
 
+		// If it's not currently rotating, but it isn't facing forward, reset it
 		if(afc.getRotY() != 0 && speed == 0)
 		{
-			speed = 0.02f;
+			if(afc.getRotY() > 180)
+			{
+				speed = 0.5f;
+			}
+			else
+				speed = -0.5f;
 		}
 		
 		long hoverDiff = System.currentTimeMillis() - hoverTime;
@@ -179,6 +199,7 @@ public class Renderer extends RajawaliRenderer {
 		long diff = System.currentTimeMillis() - timeDown;
 		if( diff > 500 && diff < 1000)
 		{
+			bounceCount = 0;
 			if(speed > 0 && !(speed <= 4))
 			{
 				speed -= 0.1f;
@@ -200,11 +221,13 @@ public class Renderer extends RajawaliRenderer {
 			}
 		}
 		else if(diff > 2000 && speed != 0)
-		{			
+		{	
+			//After 2 seconds of spinning, bounce a few times then reset to face forward
 			float firstBounce;
 			float secondBounce;
 			float interval = 2 * Math.abs(speed);
-
+			boolean bounce1 = false;
+			
 			if(speed < 0)
 			{
 				firstBounce = 360 + 25 * speed;
@@ -216,7 +239,19 @@ public class Renderer extends RajawaliRenderer {
 				secondBounce = 15 * speed;
 			}
 
-			boolean bounce1 = result > firstBounce && result < (firstBounce + interval);
+			//If it's spinning too fast, don't bounce.
+			if(speed > 3.6f)
+			{
+				speed -= 0.5f;
+			}
+			else if(speed < -3.6f)
+			{
+				speed += 0.5f;
+			}
+			else
+				bounce1 = result > firstBounce && result < (firstBounce + interval);
+			
+			
 			boolean bounce2 = result > secondBounce && result < (secondBounce + interval);
 
 			if(bounceCount == 0 && bounce1)
@@ -228,28 +263,28 @@ public class Renderer extends RajawaliRenderer {
 			if(bounceCount == 1 && bounce1)
 			{
 				bounce = true;
-				Log.v("bounce", "1");
+//				Log.v("bounce", "1");
 				speed = -0.5f * speed;
 			}
 
 			if(bounceCount == 2 && bounce2)
 			{
 				bounce = true;
-				Log.v("bounce", "2");
+//				Log.v("bounce", "2");
 				speed = -speed;
 			}
 
 			if(bounceCount == 3 && bounce2)
 			{
 				bounce = true;
-				Log.v("bounce", "3");
+//				Log.v("bounce", "3");
 				speed = -speed;
 			}
 
 			if(bounceCount == 4 && result < interval)
 			{
 				bounce = true;
-				Log.v("bounce", "4");
+//				Log.v("bounce", "4");
 				speed = -result;
 			}
 		}
@@ -284,7 +319,7 @@ public class Renderer extends RajawaliRenderer {
 			bounceCount++;
 		}
 
-		if(bounceCount == 5)
+		if(speed == 0)
 		{
 			bounceCount = 0;
 		}		

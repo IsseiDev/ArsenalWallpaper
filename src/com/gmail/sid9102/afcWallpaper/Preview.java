@@ -1,6 +1,6 @@
 package com.gmail.sid9102.afcWallpaper;
 
-import com.gmail.sid9102.afcWallpaper.R;
+import co.sidhant.arsenalwallpaper.R;
 
 import android.app.Activity;
 import android.app.WallpaperManager;

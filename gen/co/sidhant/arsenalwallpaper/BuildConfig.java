@@ -1,5 +1,5 @@
 /** Automatically generated file. DO NOT MODIFY */
-package com.gmail.sid9102.afcWallpaper;
+package co.sidhant.arsenalwallpaper;
 
 public final class BuildConfig {
     public final static boolean DEBUG = true;

@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.gmail.sid9102.afcWallpaper"
-    android:versionCode="1"
-    android:versionName="0.1" >
+    package="co.sidhant.arsenalwallpaper"
+    android:versionCode="2"
+    android:versionName="0.2" >
 
     <uses-sdk
         android:minSdkVersion="9"
@@ -31,14 +31,14 @@
         </service>
 
         <!-- Wallpaper Settings -->
-        <activity
+        <!--<activity
             android:name="com.gmail.sid9102.afcWallpaper.Settings"
             android:exported="true"
             android:label="@string/app_name" >
             <intent-filter>
                 <category android:name="android.intent.category.PREFERENCE" />
             </intent-filter>
-        </activity>
+        </activity> -->
 
         <!-- Wallpaper Preview -->
         <activity
