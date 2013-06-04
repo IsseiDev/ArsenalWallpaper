@@ -1,4 +1,4 @@
-package com.gmail.sid9102.afcWallpaper;
+package co.sidhant.arsenalwallpaper;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;

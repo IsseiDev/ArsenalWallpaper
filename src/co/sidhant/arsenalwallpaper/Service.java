@@ -1,4 +1,4 @@
-package com.gmail.sid9102.afcWallpaper;
+package co.sidhant.arsenalwallpaper;
 
 import rajawali.wallpaper.Wallpaper;
 import android.content.Context;
