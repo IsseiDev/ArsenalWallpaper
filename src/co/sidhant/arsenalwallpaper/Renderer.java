@@ -1,44 +1,33 @@
 package co.sidhant.arsenalwallpaper;
 
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.StreamCorruptedException;
-
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
 
 import co.sidhant.arsenalwallpaper.R;
 
-
 import rajawali.BaseObject3D;
 import rajawali.SerializedObject3D;
-import rajawali.animation.Animation3D;
-import rajawali.animation.RotateAnimation3D;
 import rajawali.lights.ALight;
 import rajawali.lights.DirectionalLight;
-import rajawali.materials.DiffuseMaterial;
 import rajawali.materials.GouraudMaterial;
 import rajawali.materials.SimpleMaterial;
 import rajawali.materials.TextureInfo;
 import rajawali.materials.TextureManager.TextureType;
-import rajawali.math.Number3D;
-import rajawali.parser.ObjParser;
-import rajawali.parser.AParser.ParsingException;
-import rajawali.primitives.Cube;
 import rajawali.primitives.Plane;
 import rajawali.renderer.RajawaliRenderer;
 import android.content.Context;
 import android.content.res.Resources.NotFoundException;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
-import android.util.Log;
+//import android.util.Log;
 import android.view.MotionEvent;
 import android.view.VelocityTracker;
-import android.view.animation.AccelerateDecelerateInterpolator;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.StreamCorruptedException;
 
 public class Renderer extends RajawaliRenderer {
 	private BaseObject3D afc;
 	private Plane bg;
+	private ALight light;
 	private long timeDown;
 	private VelocityTracker velocity;
 	private float speed;
@@ -46,31 +35,29 @@ public class Renderer extends RajawaliRenderer {
 	private int bounceCount;
 	private float result;
 	private long hoverTime;
-
 	private float hoverDirection;
+	private TextureInfo bgTexture;
+	private TextureInfo afcTexture;
 
 	public Renderer(Context context) {
 		super(context);
 	}
 
 	public void initScene() {
-		ALight light = new DirectionalLight();
+		light = new DirectionalLight();
 		light.setPower(0.6f);
 		light.setPosition(0, 4, -2);
 		light.setLookAt(0, -0.7f, 4);
 		mCamera.setPosition(0, 0, -7);
 		mCamera.setLookAt(0, 0, 0);
 
-		bg = new Plane(10, 20, 1, 1);
+		bg = new Plane(20, 20, 1, 1);
 		bg.setPosition(0, 0, 15);
 		bg.setRotY(bg.getRotY() + 180);
-		SimpleMaterial bgMat = new SimpleMaterial();
-		Bitmap bgTex = BitmapFactory.decodeResource(mContext.getResources(), R.drawable.afc_bg);
-		bg.setMaterial(bgMat);
-		bg.addTexture(mTextureManager.addTexture(bgTex));
-		bg.addLight(light);
-		addChild(bg);
-
+		
+		afcTexture = mTextureManager.addEtc1Texture(mContext.getResources().openRawResource(R.drawable.afc_texture_etc), null, TextureType.DIFFUSE);
+		bgTexture = mTextureManager.addEtc1Texture(mContext.getResources().openRawResource(R.drawable.afc_bg_etc), null, TextureType.DIFFUSE);
+		
 		ObjectInputStream ois;
 		SerializedObject3D afcSer = null;
 		try {
@@ -87,14 +74,22 @@ public class Renderer extends RajawaliRenderer {
 		}
 		
 		afc = new BaseObject3D(afcSer);
+		
+		
+		SimpleMaterial bgMat = new SimpleMaterial();
+		bg.setMaterial(bgMat);
 		GouraudMaterial afcMat = new GouraudMaterial();
 		afcMat.setSpecularIntensity(0.4f, 0.4f, 0.4f, 0.4f);
 		afc.setMaterial(afcMat);
-		Bitmap afcTex = BitmapFactory.decodeResource(mContext.getResources(), R.drawable.afc_texture);
-		afc.addTexture(mTextureManager.addTexture(afcTex));
+		
+		afc.addTexture(afcTexture);
+		bg.addTexture(bgTexture);
+		
+		bg.addLight(light);
+		addChild(bg);
 		afc.addLight(light);
 		addChild(afc);
-
+		
 		afc.setPosition(0, -0.7f, 4);
 	}
 
@@ -143,7 +138,7 @@ public class Renderer extends RajawaliRenderer {
 
 	public void onDrawFrame(GL10 glUnused) {
 		super.onDrawFrame(glUnused);
-
+		
 		// If it's not currently rotating, but it isn't facing forward, reset it
 		if(afc.getRotY() != 0 && speed == 0)
 		{
